@@ -6,26 +6,27 @@ public class LosePanelOpener : MonoBehaviour
 {
     [SerializeField] private Image _losePanel;
 
-    private EventBus _eventBus;
+    private SignalBus _signalBus;
 
     [Inject]
-    private void Construct(EventBus eventBus)
+    private void Construct(SignalBus signalBus)
     {
-        _eventBus = eventBus;
+        _signalBus = signalBus;
     }
 
     private void Awake()
     {
-        _eventBus.OnGameOver += ActivateLosePanel;
+        _signalBus.Subscribe<GameOverSignal>(OnActivateLosePanel);
     }
 
-    public void ActivateLosePanel()
+    public void OnActivateLosePanel()
     {
         _losePanel.gameObject.SetActive(true);
     }
 
     private void OnDestroy()
     {
-        _eventBus.OnGameOver -= ActivateLosePanel;
+        _signalBus.Unsubscribe<GameOverSignal>(OnActivateLosePanel);
+
     }
 }

@@ -1,43 +1,52 @@
+using System;
 using Zenject;
 
 public class PlayerHealthCounter : IInitializable, ILateDisposable
 {
     private PlayerHealthConfigs _playerHealthConfigs;
-    private EventBus _eventBus;
+    private PlayerHealthViewDrawer _playerHealthViewDrawer;
+    private SignalBus _signalBus;
 
     private int _allHealthCount;
 
     private int _currentHealthCount;
 
-    public PlayerHealthCounter(PlayerHealthConfigs playerHealthConfigs, EventBus eventBus)
+    public Action<int> ReduceHealthImages;
+
+    public PlayerHealthCounter(PlayerHealthConfigs playerHealthConfigs, SignalBus signalBus, PlayerHealthViewDrawer playerHealthViewDrawer)
     {
         _playerHealthConfigs = playerHealthConfigs;
-        _eventBus = eventBus;
+        _signalBus = signalBus;
+        _playerHealthViewDrawer = playerHealthViewDrawer;
+        
     }
     public void Initialize()
     {
-        _eventBus.OnPlayerAnswerIncorrect += ReduceHealth;
+        _signalBus.Subscribe<PunishPlayerSignal>(OnReduceHealth);
 
         _allHealthCount = _playerHealthConfigs.HealthCount;
 
         _currentHealthCount = _allHealthCount;
     }
 
-    public void ReduceHealth()
+    public void OnReduceHealth()
     {
         _currentHealthCount -= _playerHealthConfigs.HealthDamage;
 
-        _eventBus.OnHealthCountReduced?.Invoke(_currentHealthCount);
+        _playerHealthViewDrawer.DrawLostHeath(_currentHealthCount);
 
-        if(_currentHealthCount == 0)
+        if (_currentHealthCount == 0)
         {
-            _eventBus.OnGameOver?.Invoke();
+            _signalBus.Fire<GameOverSignal>();
+
+            return;
         }
+
+        _signalBus.Fire<SelectNewQuizItemSignal>();
     }
 
     public void LateDispose()
     {
-        _eventBus.OnPlayerAnswerIncorrect -= ReduceHealth;
-
+        _signalBus.Unsubscribe<PunishPlayerSignal>(OnReduceHealth);
     }
 }

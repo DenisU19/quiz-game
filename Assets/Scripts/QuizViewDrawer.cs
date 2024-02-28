@@ -2,32 +2,39 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 public class QuizViewDrawer : MonoBehaviour
 {
-    [SerializeField] private EventBus _eventBus;
     [SerializeField] private Image _questionImage;
     [SerializeField] private TextMeshProUGUI _questionText;
     [SerializeField] private TextMeshProUGUI[] _answerButtonsTexts;
 
+    private SignalBus _signalBus;
     private System.Random _answerOrderRandom;
+
+    [Inject]
+    private void Construct(SignalBus signalBus)
+    {
+        _signalBus = signalBus;
+    }
 
     private void Awake()
     {
-        _eventBus.OnNewQuizItemSelected += DrawNewQuizView;
+        _signalBus.Subscribe<QuizItemSelectedSignal>(OnDrawNewQuizView);
 
         _answerOrderRandom = new System.Random();
     }
 
-    public void DrawNewQuizView(QuizItem quizItem)
+    public void OnDrawNewQuizView(QuizItemSelectedSignal signal)
     {
-        _questionImage.sprite = quizItem.QuestionImage;
+        _questionImage.sprite = signal.NewQuizItem.QuestionImage;
 
-        _questionText.text = quizItem.Question;
+        _questionText.text = signal.NewQuizItem.Question;
 
         ShakeButtonsTexts();
 
-        RedrawButtonsText(quizItem.AllAnswers);
+        RedrawButtonsText(signal.NewQuizItem.AllAnswers);
 
     }
 
@@ -46,6 +53,6 @@ public class QuizViewDrawer : MonoBehaviour
 
     private void OnDestroy()
     {
-        _eventBus.OnNewQuizItemSelected -= DrawNewQuizView;
+        _signalBus.Unsubscribe<QuizItemSelectedSignal>(OnDrawNewQuizView);
     }
 }

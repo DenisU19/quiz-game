@@ -1,15 +1,21 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Zenject;
 
 [RequireComponent(typeof(Button))]
 public class AnswerButtonBehaviour : MonoBehaviour
 {
-    [SerializeField] private EventBus _eventBus;
     [SerializeField] private TextMeshProUGUI _buttonText;
 
+    private SignalBus _signalBus;
     private Button _answerButton;
 
+    [Inject]
+    private void Construct(SignalBus signalBus)
+    {
+        _signalBus = signalBus;
+    }
 
     private void Awake()
     {
@@ -20,7 +26,7 @@ public class AnswerButtonBehaviour : MonoBehaviour
 
     public void SelectCurrentAnswer()
     {
-        _eventBus.OnPlayerSelectAnswer?.Invoke(_buttonText.text);
+        _signalBus.Fire(new PlayerAnswerSelectedSignal(_buttonText.text));
     }
 
     private void OnDestroy()

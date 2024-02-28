@@ -1,12 +1,26 @@
-using UnityEngine;
 using Zenject;
 
 public class ProjectInstaller : MonoInstaller
 {
-    [SerializeField] private EventBus _eventBus;
-
     public override void InstallBindings()
     {
-        Container.Bind<EventBus>().FromInstance(_eventBus);
+        SignalBusInstaller.Install(Container);
+
+        DeclareSignals();
+
+        Container.BindInterfacesTo<PlayerAnswerVerifier>().AsSingle();
+    }
+
+    public void DeclareSignals()
+    {
+        Container.DeclareSignal<QuizItemSelectedSignal>();
+        Container.DeclareSignal<PlayerAnswerSelectedSignal>();
+        Container.DeclareSignal<PlayerAnswerCorrectSignal>();
+        Container.DeclareSignal<PlayerAnswerWrongSignal>();
+        Container.DeclareSignal<DetermineCorrectAnswerSignal>();
+        Container.DeclareSignal<SelectNewQuizItemSignal>();
+        Container.DeclareSignal<PunishPlayerSignal>();
+        Container.DeclareSignal<FreezeGameSignal>();
+        Container.DeclareSignal<GameOverSignal>();
     }
 }

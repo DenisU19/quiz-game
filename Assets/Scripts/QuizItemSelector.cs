@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
@@ -6,35 +5,27 @@ using Zenject;
 public class QuizItemSelector : IInitializable, ILateDisposable
 {
     private QuizConfigs _quizConfigs;
-    private EventBus _eventBus;
-
+    private SignalBus _signalBus;
     private List<int> _usedQuizItemIndex;
     private int _lastItemIndex;
 
     [Inject]
-    public void Construct(QuizConfigs quizConfigs, EventBus eventBus)
+    public void Construct(SignalBus signalBus, QuizConfigs quizConfigs)
     {
+        _signalBus = signalBus;
         _quizConfigs = quizConfigs;
-        _eventBus = eventBus;
     }
 
     public void Initialize()
     {
-        _eventBus.OnPlayerAnswerCorrect += SelectNewItem;
-        _eventBus.OnPlayerAnswerIncorrect += SelectNewItem;
+        _signalBus.Subscribe<SelectNewQuizItemSignal>(OnSelectNewItem);
 
         _usedQuizItemIndex = new List<int>();
 
-        SelectNewItem();
+        OnSelectNewItem();
     }
 
-    public void LateDispose()
-    {
-        _eventBus.OnPlayerAnswerCorrect -= SelectNewItem;
-        _eventBus.OnPlayerAnswerIncorrect -= SelectNewItem;
-    }
-
-    public void SelectNewItem()
+    public void OnSelectNewItem()
     {
         do
         {
@@ -44,11 +35,16 @@ public class QuizItemSelector : IInitializable, ILateDisposable
 
         _usedQuizItemIndex.Add(_lastItemIndex);
 
-        _eventBus.OnNewQuizItemSelected?.Invoke(_quizConfigs.QuizItems[_lastItemIndex]);
+        _signalBus.Fire(new QuizItemSelectedSignal(_quizConfigs.QuizItems[_lastItemIndex]));
 
         if (_usedQuizItemIndex.Count == _quizConfigs.QuizItems.Length)
         {
             _usedQuizItemIndex.Clear();
         }
+    }
+
+    public void LateDispose()
+    {
+        _signalBus.Unsubscribe<SelectNewQuizItemSignal>(OnSelectNewItem);
     }
 }

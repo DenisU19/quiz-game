@@ -8,20 +8,16 @@ public class PlayerHealthViewDrawer : MonoBehaviour
     [SerializeField] private Transform _healthImagesParent;
 
     private PlayerHealthConfigs _playerHealthConfigs;
-    private EventBus _eventBus;
     private List<Image> _healthImageCollection;
 
     [Inject]
-    private void Construct(PlayerHealthConfigs playerHealthConfigs, EventBus eventBus)
+    private void Construct(PlayerHealthConfigs playerHealthConfigs)
     {
         _playerHealthConfigs = playerHealthConfigs;
-        _eventBus = eventBus;
     }
 
     private void Awake()
     {
-        _eventBus.OnHealthCountReduced += ReduceHealth;
-
         _healthImageCollection = new List<Image>(_playerHealthConfigs.HealthCount);
 
         SpawnHealthImage();
@@ -36,13 +32,8 @@ public class PlayerHealthViewDrawer : MonoBehaviour
         }
     }
 
-    public void ReduceHealth(int reduceImageIndex)
+    public void DrawLostHeath(int healthCount)
     {
-            _healthImageCollection[reduceImageIndex].gameObject.SetActive(false);
-    }
-
-    private void OnDestroy()
-    {
-        _eventBus.OnHealthCountReduced -= ReduceHealth;
+          _healthImageCollection[healthCount].gameObject.SetActive(false);
     }
 }
